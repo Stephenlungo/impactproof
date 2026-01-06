@@ -1,0 +1,9 @@
+project:
+  name: "ImpactProof Local Run"
+
+input:
+  mode: "csv"
+
+output:
+  mode: "csv"
+  path: "outputs/"
