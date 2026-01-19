@@ -15,6 +15,17 @@ class ImpactProofConfig:
         out = self.raw.get("output", {}).get("path", "outputs/")
         return Path(out)
 
+    @property
+    def input_csv_file(self) -> Path:
+        file = self.raw.get("input", {}).get("csv", {}).get("file")
+        if not file:
+            raise ValueError("input.csv.file is required for csv mode")
+        return Path(file)
+
+    @property
+    def completeness_cfg(self) -> dict:
+        return self.raw.get("checks", {}).get("completeness", {})
+
 
 def load_config(path: str | Path) -> ImpactProofConfig:
     path = Path(path)

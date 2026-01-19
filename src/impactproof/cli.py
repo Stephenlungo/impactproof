@@ -6,36 +6,38 @@ import csv
 
 from impactproof.config import load_config
 
-
-def write_dummy_scorecard(output_dir: Path) -> Path:
-    output_dir.mkdir(parents=True, exist_ok=True)
-    out_file = output_dir / "quality_scorecard.csv"
-
-    rows = [
-        {"check": "completeness", "status": "PASS", "notes": "dummy"},
-        {"check": "duplicates", "status": "PASS", "notes": "dummy"},
-        {"check": "overall", "status": "PASS", "notes": "Session 2 skeleton run"},
-    ]
-
-    with out_file.open("w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=["check", "status", "notes"])
-        writer.writeheader()
-        writer.writerows(rows)
-
-    return out_file
-
+import pandas as pd
+from impactproof.checks.completeness import run_completeness
 
 def cmd_run(args: argparse.Namespace) -> int:
     cfg = load_config(args.config)
     output_dir = cfg.output_path
+    output_dir.mkdir(parents=True, exist_ok=True)
 
     print("ImpactProof run started")
     print(f"Loaded config: {args.config}")
-    print(f"Output path: {output_dir}")
 
-    out_file = write_dummy_scorecard(output_dir)
-    print(f"Wrote: {out_file}")
+    # Load CSV
+    csv_file = cfg.input_csv_file
+    print(f"Reading CSV: {csv_file}")
+    df = pd.read_csv(csv_file)
 
+    # Run Completeness
+    comp = run_completeness(df, cfg.completeness_cfg)
+
+    # Write scorecard
+    scorecard_file = output_dir / "quality_scorecard.csv"
+    with scorecard_file.open("w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=["check", "status", "notes"])
+        writer.writeheader()
+        writer.writerow({"check": comp.check, "status": comp.status, "notes": comp.notes})
+
+    # Write issues
+    issues_file = output_dir / "issues_all.csv"
+    comp.issues.to_csv(issues_file, index=False)
+
+    print(f"Wrote: {scorecard_file}")
+    print(f"Wrote: {issues_file}")
     print("ImpactProof run finished")
     return 0
 

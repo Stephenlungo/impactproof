@@ -3,6 +3,19 @@ project:
 
 input:
   mode: "csv"
+  csv:
+    file: "data/sample.csv"
+
+standardization:
+  id_fields:
+    entity_id: "learner_id"
+  date_field: "encounter_date"
+
+checks:
+  completeness:
+    required_fields: ["learner_id", "encounter_date", "school"]
+    pass_threshold: 0.95   # % of rows that must be complete for PASS
+    warn_threshold: 0.85   # below pass, above warn => WARN, below warn => FAIL
 
 output:
   mode: "csv"
