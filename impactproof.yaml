@@ -25,6 +25,21 @@ checks:
     keys: ["learner_id", "encounter_date"]
     pass_threshold: 0.00   # % duplicate rows allowed for PASS
     warn_threshold: 0.02   # <=2% duplicates => WARN, above => FAIL
+  
+  consistency:
+    rules:
+      - name: "CompletedRequiresFollowupDate"
+        when:
+          field: "outcome"
+          equals: "Completed"
+        then_required: ["followup_date"]
+
+      - name: "ReferralNoMeansFacilityNA"
+        when:
+          field: "referral"
+          equals: "NO"
+        then_equals:
+          referral_facility: "NA"
 
 output:
   mode: "csv"

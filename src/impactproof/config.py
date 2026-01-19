@@ -33,6 +33,10 @@ class ImpactProofConfig:
     @property
     def standardization_cfg(self) -> dict:
         return self.raw.get("standardization", {})
+    
+    @property
+    def consistency_cfg(self) -> dict:
+        return self.raw.get("checks", {}).get("consistency", {})
 
 
 def load_config(path: str | Path) -> ImpactProofConfig:

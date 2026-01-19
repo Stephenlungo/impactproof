@@ -43,6 +43,7 @@ def apply_missing_labels(df: pd.DataFrame, cfg: Dict[str, Any]) -> pd.DataFrame:
 
         # Normalize whitespace-only to empty string
         s = s.apply(lambda x: x.strip() if isinstance(x, str) else x)
+        s = s.fillna("NA")
 
         # Apply mappings in a stable order
         # 1) UNKNOWN
