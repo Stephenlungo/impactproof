@@ -1,0 +1,16 @@
+[project]
+name = "impactproof"
+version = "0.1.0"
+description = "Data quality and donor-ready reporting toolkit for NGOs"
+requires-python = ">=3.9"
+dependencies = ["pyyaml"]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
