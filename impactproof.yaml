@@ -41,6 +41,13 @@ checks:
         then_equals:
           referral_facility: "NA"
 
+  drift:
+    date_field: "encounter_date"
+    period: "monthly"          # monthly | weekly (monthly for MVP)
+    baseline_periods: 2        # how many previous periods to compare against
+    warn_pct_change: 0.30      # 30%
+    fail_pct_change: 0.50      # 50%
+
 output:
   mode: "csv"
   path: "outputs/"

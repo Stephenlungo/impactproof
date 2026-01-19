@@ -1,6 +1,10 @@
 learner_id,encounter_date,school,outcome,followup_date,referral,referral_facility
-L001,2026-01-01,School A,Completed,,YES,Clinic 1
-L002,UNKNOWN,School B,Completed,,NO,Clinic X
-L003,2026-01-03,NA,In Progress,NA,NO,Kaya
-L004,2026-01-04,,Completed,2026-01-10,NO,NA
-L001,2026-01-01,School A,Completed,,YES,Clinic 1
+L001,2026-01-05,School A,Completed,,YES,Clinic 1
+L002,2026-01-06,School B,Completed,,NO,Clinic X
+L003,2026-02-03,School A,In Progress,NA,NO,NA
+L004,2026-02-10,School A,Completed,2026-02-15,NO,NA
+L005,2026-02-20,School C,Completed,,YES,Clinic 2
+L006,2026-03-01,School A,Completed,,YES,Clinic 1
+L006,2026-03-02,School A,Completed,,YES,Clinic 1
+L006,2026-03-05,School A,Completed,,YES,Clinic 1
+L006,2026-03-08,School A,Completed,,YES,Clinic 1

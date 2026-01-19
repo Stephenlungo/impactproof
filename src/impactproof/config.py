@@ -37,6 +37,10 @@ class ImpactProofConfig:
     @property
     def consistency_cfg(self) -> dict:
         return self.raw.get("checks", {}).get("consistency", {})
+    
+    @property
+    def drift_cfg(self) -> dict:
+        return self.raw.get("checks", {}).get("drift", {})
 
 
 def load_config(path: str | Path) -> ImpactProofConfig:

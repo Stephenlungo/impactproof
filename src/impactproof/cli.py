@@ -11,6 +11,7 @@ from impactproof.checks.completeness import run_completeness
 from impactproof.checks.duplicates import run_duplicates
 from impactproof.standardize.missing_labels import apply_missing_labels
 from impactproof.checks.consistency import run_consistency
+from impactproof.checks.drift import run_drift
 
 def cmd_run(args: argparse.Namespace) -> int:
     cfg = load_config(args.config)
@@ -32,6 +33,7 @@ def cmd_run(args: argparse.Namespace) -> int:
     comp = run_completeness(df, cfg.completeness_cfg)
     dups = run_duplicates(df, cfg.duplicates_cfg)
     cons = run_consistency(df, cfg.consistency_cfg)
+    drift = run_drift(df, cfg.drift_cfg)
 
     # Write scorecard (one row per check + overall)
     scorecard_file = output_dir / "quality_scorecard.csv"
@@ -39,11 +41,12 @@ def cmd_run(args: argparse.Namespace) -> int:
         {"check": comp.check, "status": comp.status, "notes": comp.notes},
         {"check": dups.check, "status": dups.status, "notes": dups.notes},
         {"check": cons.check, "status": cons.status, "notes": cons.notes},
+        {"check": drift.check, "status": drift.status, "notes": drift.notes},
     ]
 
     # simple overall status (worst-of)
     order = {"PASS": 0, "WARN": 1, "FAIL": 2}
-    worst = max([comp.status, dups.status, cons.status], key=lambda s: order.get(s, 2))
+    worst = max([comp.status, dups.status, cons.status, drift.status], key=lambda s: order.get(s, 2))
     rows.append({"check": "overall", "status": worst, "notes": "Worst-of check statuses"})
 
     with scorecard_file.open("w", newline="", encoding="utf-8") as f:
@@ -60,6 +63,8 @@ def cmd_run(args: argparse.Namespace) -> int:
         all_issues.append(dups.issues)
     if not cons.issues.empty:
         all_issues.append(cons.issues)
+    if not drift.issues.empty:
+        all_issues.append(drift.issues)
 
     if all_issues:
         pd.concat(all_issues, ignore_index=True).to_csv(issues_file, index=False)
