@@ -29,6 +29,10 @@ class ImpactProofConfig:
     @property
     def duplicates_cfg(self) -> dict:
         return self.raw.get("checks", {}).get("duplicates", {})
+    
+    @property
+    def standardization_cfg(self) -> dict:
+        return self.raw.get("standardization", {})
 
 
 def load_config(path: str | Path) -> ImpactProofConfig:

@@ -43,7 +43,12 @@ def run_completeness(df: pd.DataFrame, cfg: Dict[str, Any]) -> CompletenessResul
 
     # Compute completeness over required cells (row x required_fields)
     required = df[required_fields]
-    is_present = ~required.isna() & (required.astype(str).apply(lambda s: s.str.strip()) != "")
+
+    # Treat NA/UNKNOWN as missing; NO is allowed as a real value
+    norm = required.astype(str).apply(lambda s: s.str.strip())
+    is_missing = required.isna() | norm.eq("") | norm.eq("NA") | norm.eq("UNKNOWN")
+    is_present = ~is_missing
+
     total_required_cells = int(is_present.size)
     present_cells = int(is_present.values.sum())
     missing_cells = total_required_cells - present_cells
@@ -59,10 +64,13 @@ def run_completeness(df: pd.DataFrame, cfg: Dict[str, Any]) -> CompletenessResul
 
     # Record-level issues: one row per missing required field per record
     issues_rows = []
+    missing_tokens = {"", "NA", "UNKNOWN"}
+
     for idx, row in required.iterrows():
         for col in required_fields:
             val = row[col]
-            if pd.isna(val) or str(val).strip() == "":
+            s = "" if pd.isna(val) else str(val).strip()
+            if pd.isna(val) or s in missing_tokens:
                 issues_rows.append({
                     "check": "completeness",
                     "record_index": idx,

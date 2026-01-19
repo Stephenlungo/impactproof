@@ -1,7 +1,6 @@
 learner_id,encounter_date,school,outcome
 L001,2026-01-01,School A,Completed
-L002,2026-01-01,School B,Completed
-300L,2026-01-01,School C,
-,2026-01-04,,In Progress
-L001,2022-01-01,School A,Completed
-L002,2026-01-01,School Z ,Completed
+L002,,School B,Completed
+L003,2026-01-03,NA,
+L004,2026-01-04,,In Progress
+L001,2026-01-01,School A,Completed

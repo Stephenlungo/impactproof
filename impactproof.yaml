@@ -10,6 +10,10 @@ standardization:
   id_fields:
     entity_id: "learner_id"
   date_field: "encounter_date"
+  missing_labels:
+    na_values: ["", " ", "N/A", "NA", "na", "n/a", null]
+    no_values: ["NO", "No", "no", "FALSE", "False", "false", "0"]
+    unknown_values: ["UNKNOWN", "Unknown", "unknown", "Not sure", "NOT_SURE"]
 
 checks:
   completeness:

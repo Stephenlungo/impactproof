@@ -9,6 +9,7 @@ from impactproof.config import load_config
 import pandas as pd
 from impactproof.checks.completeness import run_completeness
 from impactproof.checks.duplicates import run_duplicates
+from impactproof.standardize.missing_labels import apply_missing_labels
 
 def cmd_run(args: argparse.Namespace) -> int:
     cfg = load_config(args.config)
@@ -22,6 +23,9 @@ def cmd_run(args: argparse.Namespace) -> int:
     csv_file = cfg.input_csv_file
     print(f"Reading CSV: {csv_file}")
     df = pd.read_csv(csv_file)
+
+    # Standardize missing labels (NA/NO/UNKNOWN) before checks
+    df = apply_missing_labels(df, cfg.standardization_cfg)
 
     # Run Checks
     comp = run_completeness(df, cfg.completeness_cfg)
