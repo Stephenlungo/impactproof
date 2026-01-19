@@ -8,6 +8,7 @@ from impactproof.config import load_config
 
 import pandas as pd
 from impactproof.checks.completeness import run_completeness
+from impactproof.checks.duplicates import run_duplicates
 
 def cmd_run(args: argparse.Namespace) -> int:
     cfg = load_config(args.config)
@@ -22,23 +23,45 @@ def cmd_run(args: argparse.Namespace) -> int:
     print(f"Reading CSV: {csv_file}")
     df = pd.read_csv(csv_file)
 
-    # Run Completeness
+    # Run Checks
     comp = run_completeness(df, cfg.completeness_cfg)
+    dups = run_duplicates(df, cfg.duplicates_cfg)
 
-    # Write scorecard
+    # Write scorecard (one row per check + overall)
     scorecard_file = output_dir / "quality_scorecard.csv"
+    rows = [
+        {"check": comp.check, "status": comp.status, "notes": comp.notes},
+        {"check": dups.check, "status": dups.status, "notes": dups.notes},
+    ]
+
+    # simple overall status (worst-of)
+    order = {"PASS": 0, "WARN": 1, "FAIL": 2}
+    worst = max([comp.status, dups.status], key=lambda s: order.get(s, 2))
+    rows.append({"check": "overall", "status": worst, "notes": "Worst-of check statuses"})
+
     with scorecard_file.open("w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=["check", "status", "notes"])
         writer.writeheader()
-        writer.writerow({"check": comp.check, "status": comp.status, "notes": comp.notes})
+        writer.writerows(rows)
 
-    # Write issues
+    # Combine issues
     issues_file = output_dir / "issues_all.csv"
-    comp.issues.to_csv(issues_file, index=False)
+    all_issues = []
+    if not comp.issues.empty:
+        all_issues.append(comp.issues)
+    if not dups.issues.empty:
+        all_issues.append(dups.issues)
+
+    if all_issues:
+        pd.concat(all_issues, ignore_index=True).to_csv(issues_file, index=False)
+    else:
+        # write empty file with headers
+        pd.DataFrame(columns=["check", "record_index", "field", "message", "suggested_fix"]).to_csv(
+            issues_file, index=False
+        )
 
     print(f"Wrote: {scorecard_file}")
     print(f"Wrote: {issues_file}")
-    print("ImpactProof run finished")
     return 0
 
 

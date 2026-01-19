@@ -17,6 +17,11 @@ checks:
     pass_threshold: 0.95   # % of rows that must be complete for PASS
     warn_threshold: 0.85   # below pass, above warn => WARN, below warn => FAIL
 
+  duplicates:
+    keys: ["learner_id", "encounter_date"]
+    pass_threshold: 0.00   # % duplicate rows allowed for PASS
+    warn_threshold: 0.02   # <=2% duplicates => WARN, above => FAIL
+
 output:
   mode: "csv"
   path: "outputs/"

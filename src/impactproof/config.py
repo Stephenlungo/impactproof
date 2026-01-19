@@ -25,6 +25,10 @@ class ImpactProofConfig:
     @property
     def completeness_cfg(self) -> dict:
         return self.raw.get("checks", {}).get("completeness", {})
+    
+    @property
+    def duplicates_cfg(self) -> dict:
+        return self.raw.get("checks", {}).get("duplicates", {})
 
 
 def load_config(path: str | Path) -> ImpactProofConfig:
