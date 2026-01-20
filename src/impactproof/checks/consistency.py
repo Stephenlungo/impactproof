@@ -36,7 +36,9 @@ def run_consistency(df: pd.DataFrame, cfg: Dict[str, Any]) -> ConsistencyResult:
         )
 
     issues_rows: List[Dict[str, Any]] = []
-    failed_rule_names = set()
+
+    evaluated_rule_names = set()   # WHEN matched at least one row
+    rules_with_issues = set()      # produced record-level or config issues
 
     for rule in rules:
         name = rule.get("name", "UnnamedRule")
@@ -53,11 +55,13 @@ def run_consistency(df: pd.DataFrame, cfg: Dict[str, Any]) -> ConsistencyResult:
                 "message": f"Rule '{name}' skipped: missing when.field '{when_field}' in dataset",
                 "suggested_fix": "Fix field mapping or adjust rule configuration.",
             })
-            failed_rule_names.add(name)
+            rules_with_issues.add(name)
             continue
 
         # Rows where the condition applies
         mask = df[when_field].astype(str).str.strip().eq(str(when_equals).strip())
+        if mask.any():
+            evaluated_rule_names.add(name)
 
         # THEN: required fields must be present
         then_required = rule.get("then_required", [])
@@ -70,7 +74,7 @@ def run_consistency(df: pd.DataFrame, cfg: Dict[str, Any]) -> ConsistencyResult:
                     "message": f"Rule '{name}' failed: required field '{req_field}' not in dataset",
                     "suggested_fix": "Fix field mapping or adjust rule configuration.",
                 })
-                failed_rule_names.add(name)
+                rules_with_issues.add(name)
                 continue
 
             for idx in df.index[mask]:
@@ -83,7 +87,7 @@ def run_consistency(df: pd.DataFrame, cfg: Dict[str, Any]) -> ConsistencyResult:
                         "message": f"Rule '{name}': '{when_field}' is '{when_equals}' so '{req_field}' is required",
                         "suggested_fix": f"Populate '{req_field}' for this record, or correct '{when_field}' if misclassified.",
                     })
-                    failed_rule_names.add(name)
+                    rules_with_issues.add(name)
 
         # THEN: specific fields must equal given values
         then_equals = rule.get("then_equals", {}) or {}
@@ -96,7 +100,7 @@ def run_consistency(df: pd.DataFrame, cfg: Dict[str, Any]) -> ConsistencyResult:
                     "message": f"Rule '{name}' failed: field '{field}' not in dataset",
                     "suggested_fix": "Fix field mapping or adjust rule configuration.",
                 })
-                failed_rule_names.add(name)
+                rules_with_issues.add(name)
                 continue
 
             for idx in df.index[mask]:
@@ -110,7 +114,7 @@ def run_consistency(df: pd.DataFrame, cfg: Dict[str, Any]) -> ConsistencyResult:
                         "message": f"Rule '{name}': expected '{field}' == '{exp}' when '{when_field}' == '{when_equals}' (got '{actual}')",
                         "suggested_fix": f"Set '{field}' to '{exp}' or correct '{when_field}'.",
                     })
-                    failed_rule_names.add(name)
+                    rules_with_issues.add(name)
 
     issues = pd.DataFrame(issues_rows, columns=["check", "record_index", "field", "message", "suggested_fix"])
 
@@ -125,11 +129,15 @@ def run_consistency(df: pd.DataFrame, cfg: Dict[str, Any]) -> ConsistencyResult:
     else:
         status = "PASS"
 
-    notes = f"{len(failed_rule_names)} rule(s) triggered; {len(issues)} issue(s)"
+    notes = (
+        f"{len(evaluated_rule_names)} rules evaluated; "
+        f"{len(rules_with_issues)} produced issues; "
+        f"{len(issues)} total issues"
+    )
     return ConsistencyResult(
         check="consistency",
         status=status,
-        failed_rules=len(failed_rule_names),
+        failed_rules=len(rules_with_issues),
         issues_count=int(len(issues)),
         notes=notes,
         issues=issues,
