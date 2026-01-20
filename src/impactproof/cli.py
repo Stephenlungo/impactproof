@@ -13,6 +13,36 @@ from impactproof.standardize.missing_labels import apply_missing_labels
 from impactproof.checks.consistency import run_consistency
 from impactproof.checks.drift import run_drift
 
+
+def write_fix_list(issues_df, output_file):
+    """
+    Create a grouped fix list from issues_all:
+    Groups by (check, field, message), counts affected records.
+    """
+    import pandas as pd
+
+    if issues_df is None or issues_df.empty:
+        pd.DataFrame(columns=["check", "field", "message", "count"]).to_csv(output_file, index=False)
+        return
+
+    df = issues_df.copy()
+
+    # Normalize missing fields
+    if "field" not in df.columns:
+        df["field"] = ""
+    if "message" not in df.columns:
+        df["message"] = ""
+
+    fix = (
+        df.groupby(["check", "field", "message"], dropna=False)
+          .size()
+          .reset_index(name="count")
+          .sort_values(["count", "check", "field"], ascending=[False, True, True])
+    )
+
+    fix.to_csv(output_file, index=False)
+
+
 def cmd_run(args: argparse.Namespace) -> int:
     cfg = load_config(args.config)
     output_dir = cfg.output_path
@@ -67,12 +97,15 @@ def cmd_run(args: argparse.Namespace) -> int:
         all_issues.append(drift.issues)
 
     if all_issues:
-        pd.concat(all_issues, ignore_index=True).to_csv(issues_file, index=False)
+        issues_combined = pd.concat(all_issues, ignore_index=True)
+        issues_combined.to_csv(issues_file, index=False)
     else:
-        # write empty file with headers
-        pd.DataFrame(columns=["check", "record_index", "field", "message", "suggested_fix"]).to_csv(
-            issues_file, index=False
-        )
+        issues_combined = pd.DataFrame(columns=["check", "record_index", "field", "message", "suggested_fix"])
+        issues_combined.to_csv(issues_file, index=False)
+
+    fix_list_file = output_dir / "fix_list.csv"
+    write_fix_list(issues_combined, fix_list_file)
+    print(f"Wrote: {fix_list_file}")
 
     print(f"Wrote: {scorecard_file}")
     print(f"Wrote: {issues_file}")
