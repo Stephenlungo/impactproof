@@ -1,0 +1,2 @@
+[console_scripts]
+impactproof = impactproof.cli:main

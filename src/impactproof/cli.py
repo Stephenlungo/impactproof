@@ -117,7 +117,11 @@ def build_parser() -> argparse.ArgumentParser:
     sub = p.add_subparsers(dest="command", required=True)
 
     run_p = sub.add_parser("run", help="Run ImpactProof with a config file")
-    run_p.add_argument("--config", required=True, help="Path to impactproof.yaml")
+    
+    run_p.add_argument(
+    "--config",
+    default="impactproof.yaml",
+    help="Path to config file (default: impactproof.yaml)",)
     run_p.set_defaults(func=cmd_run)
 
     return p
