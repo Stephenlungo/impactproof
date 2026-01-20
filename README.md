@@ -7,7 +7,7 @@ This document is the single source of truth for the ImpactProof project. It orga
 1. Project Overview
 
 Project name: ImpactProof
-Tagline: Turn messy program data into donor-ready proof.
+Tagline: Because impact deserves clean data!
 
 Problem: NGOs across sectors struggle with unreliable data and stressful donor reporting cycles.
 
@@ -199,6 +199,4 @@ ImpactProof writes to `outputs/`:
 	• `fix_list.csv` — grouped summary of top issues
 
 ⸻
-
-9. Current Status
 
