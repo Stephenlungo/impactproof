@@ -7,7 +7,8 @@ This document is the single source of truth for the ImpactProof project. It orga
 1. Project Overview
 
 Project name: ImpactProof
-Tagline: Because impact deserves clean data!
+
+Tagline: Impact deserves clean data!
 
 Problem: NGOs across sectors struggle with unreliable data and stressful donor reporting cycles.
 
