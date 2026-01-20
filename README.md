@@ -193,6 +193,11 @@ Run
 python -m impactproof run --config impactproof.yaml
 ```
 
+Scripts
+```bash
+impactproof run
+```
+
 Outputs
 ImpactProof writes to `outputs/`:
 	• `quality_scorecard.csv` — PASS/WARN/FAIL per check + overall
