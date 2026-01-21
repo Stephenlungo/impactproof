@@ -16,7 +16,7 @@ from impactproof.checks.drift import run_drift
 
 
 st.set_page_config(page_title="ImpactProof Pilot UI", layout="wide")
-st.title("ImpactProof — Pilot UI")
+st.title("ImpactProof — Pilot v0.5.0")
 st.caption("Upload a CSV, configure checks, run, and review outputs.")
 
 
