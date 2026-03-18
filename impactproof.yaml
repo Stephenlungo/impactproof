@@ -48,6 +48,34 @@ checks:
     warn_pct_change: 0.30      # 30%
     fail_pct_change: 0.50      # 50%
 
+  allowed_values:
+    rules:
+      - field: "outcome"
+        allowed: ["Completed", "In Progress"]
+        allow_missing: false
+      - field: "referral"
+        allowed: ["YES", "NO"]
+        allow_missing: false
+
+  date_validity:
+    fields: ["encounter_date", "followup_date"]
+
+  numeric_ranges:
+    rules:
+      - field: "age"
+        min: 5
+        max: 19
+        allow_missing: false
+
+  cross_field:
+    rules:
+      - name: "FollowupOnOrAfterEncounter"
+        left_field: "followup_date"
+        operator: ">="
+        right_field: "encounter_date"
+        compare_as: "date"
+        allow_missing: true
+
 output:
   mode: "csv"
   path: "outputs/"

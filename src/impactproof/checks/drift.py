@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from typing import Any, Dict
 import pandas as pd
 
+from impactproof.issues import empty_issues, issue_row
+
 
 @dataclass
 class DriftResult:
@@ -33,7 +35,7 @@ def run_drift(df: pd.DataFrame, cfg: Dict[str, Any]) -> DriftResult:
             latest_count=0,
             pct_change=0.0,
             notes=f"Date field '{date_field}' missing; drift skipped",
-            issues=pd.DataFrame(),
+            issues=empty_issues(),
         )
 
     # Parse dates safely
@@ -53,7 +55,7 @@ def run_drift(df: pd.DataFrame, cfg: Dict[str, Any]) -> DriftResult:
             latest_count=int(counts.iloc[-1]),
             pct_change=0.0,
             notes="Not enough historical periods to evaluate drift",
-            issues=pd.DataFrame(),
+            issues=empty_issues(),
         )
 
     latest_period = counts.index[-1]
@@ -75,19 +77,22 @@ def run_drift(df: pd.DataFrame, cfg: Dict[str, Any]) -> DriftResult:
     else:
         status = "PASS"
 
-    issues = pd.DataFrame([{
-        "check": "drift",
-        "record_index": None,
-        "field": date_field,
-        "message": (
-            f"Volume drift detected for {latest_period}: "
-            f"{pct_change:.1%} change vs baseline avg ({baseline_avg:.1f})"
-        ),
-        "suggested_fix": (
-            "Verify reporting completeness, backlogs, or duplicate submissions "
-            "for this period."
-        ),
-    }]) if status != "PASS" else pd.DataFrame()
+    issues = pd.DataFrame([
+        issue_row(
+            "drift",
+            None,
+            date_field,
+            "ERROR" if status == "FAIL" else "WARN",
+            (
+                f"Volume drift detected for {latest_period}: "
+                f"{pct_change:.1%} change vs baseline avg ({baseline_avg:.1f})"
+            ),
+            (
+                "Verify reporting completeness, backlogs, or duplicate submissions "
+                "for this period."
+            ),
+        )
+    ]) if status != "PASS" else empty_issues()
 
     notes = (
         f"{latest_period}: {latest_count} records vs baseline avg "

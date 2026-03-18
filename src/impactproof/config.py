@@ -42,6 +42,22 @@ class ImpactProofConfig:
     def drift_cfg(self) -> dict:
         return self.raw.get("checks", {}).get("drift", {})
 
+    @property
+    def allowed_values_cfg(self) -> dict:
+        return self.raw.get("checks", {}).get("allowed_values", {})
+
+    @property
+    def date_validity_cfg(self) -> dict:
+        return self.raw.get("checks", {}).get("date_validity", {})
+
+    @property
+    def numeric_ranges_cfg(self) -> dict:
+        return self.raw.get("checks", {}).get("numeric_ranges", {})
+
+    @property
+    def cross_field_cfg(self) -> dict:
+        return self.raw.get("checks", {}).get("cross_field", {})
+
 
 def load_config(path: str | Path) -> ImpactProofConfig:
     path = Path(path)

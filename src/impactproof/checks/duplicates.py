@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from typing import Any, Dict, List
 import pandas as pd
 
+from impactproof.issues import empty_issues, issue_row
+
 
 @dataclass
 class DuplicatesResult:
@@ -23,13 +25,16 @@ def run_duplicates(df: pd.DataFrame, cfg: Dict[str, Any]) -> DuplicatesResult:
 
     missing_cols = [c for c in keys if c not in df.columns]
     if missing_cols:
-        issues = pd.DataFrame([{
-            "check": "duplicates",
-            "record_index": None,
-            "field": None,
-            "message": f"Missing key columns in dataset: {missing_cols}",
-            "suggested_fix": "Update keys or add/match these columns in input/mapping.",
-        }])
+        issues = pd.DataFrame([
+            issue_row(
+                "duplicates",
+                None,
+                None,
+                "WARN",
+                f"Missing key columns in dataset: {missing_cols}",
+                "Update keys or add/match these columns in input/mapping.",
+            )
+        ])
         return DuplicatesResult(
             check="duplicates",
             status="FAIL",
@@ -49,7 +54,7 @@ def run_duplicates(df: pd.DataFrame, cfg: Dict[str, Any]) -> DuplicatesResult:
             total_rows=0,
             duplicate_rate=0.0,
             notes="No rows to evaluate",
-            issues=pd.DataFrame(columns=["check", "record_index", "field", "message", "suggested_fix"]),
+            issues=empty_issues(),
         )
 
     # mark duplicates on the key set (keep all duplicates)
@@ -69,9 +74,10 @@ def run_duplicates(df: pd.DataFrame, cfg: Dict[str, Any]) -> DuplicatesResult:
     issues["check"] = "duplicates"
     issues["record_index"] = issues.index
     issues["field"] = ",".join(keys)
+    issues["severity"] = "ERROR"
     issues["message"] = "Duplicate record detected for key combination"
     issues["suggested_fix"] = "De-duplicate upstream, or adjust keys if the duplication is expected."
-    issues = issues[["check", "record_index", "field", "message", "suggested_fix"]]
+    issues = issues[["check", "record_index", "field", "severity", "message", "suggested_fix"]]
 
     notes = f"{dup_rate:.1%} duplicate rows on keys {keys} ({dup_rows}/{total_rows})"
     return DuplicatesResult(

@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from typing import Any, Dict, List
 import pandas as pd
 
+from impactproof.issues import empty_issues, issue_row
+
 
 @dataclass
 class ConsistencyResult:
@@ -32,7 +34,7 @@ def run_consistency(df: pd.DataFrame, cfg: Dict[str, Any]) -> ConsistencyResult:
             failed_rules=0,
             issues_count=0,
             notes="No rules configured",
-            issues=pd.DataFrame(columns=["check", "record_index", "field", "message", "suggested_fix"]),
+            issues=empty_issues(),
         )
 
     issues_rows: List[Dict[str, Any]] = []
@@ -48,13 +50,16 @@ def run_consistency(df: pd.DataFrame, cfg: Dict[str, Any]) -> ConsistencyResult:
         when_equals = when.get("equals")
 
         if not when_field or when_field not in df.columns:
-            issues_rows.append({
-                "check": "consistency",
-                "record_index": None,
-                "field": None,
-                "message": f"Rule '{name}' skipped: missing when.field '{when_field}' in dataset",
-                "suggested_fix": "Fix field mapping or adjust rule configuration.",
-            })
+            issues_rows.append(
+                issue_row(
+                    "consistency",
+                    None,
+                    None,
+                    "WARN",
+                    f"Rule '{name}' skipped: missing when.field '{when_field}' in dataset",
+                    "Fix field mapping or adjust rule configuration.",
+                )
+            )
             rules_with_issues.add(name)
             continue
 
@@ -67,39 +72,48 @@ def run_consistency(df: pd.DataFrame, cfg: Dict[str, Any]) -> ConsistencyResult:
         then_required = rule.get("then_required", [])
         for req_field in then_required:
             if req_field not in df.columns:
-                issues_rows.append({
-                    "check": "consistency",
-                    "record_index": None,
-                    "field": None,
-                    "message": f"Rule '{name}' failed: required field '{req_field}' not in dataset",
-                    "suggested_fix": "Fix field mapping or adjust rule configuration.",
-                })
+                issues_rows.append(
+                    issue_row(
+                        "consistency",
+                        None,
+                        None,
+                        "WARN",
+                        f"Rule '{name}' failed: required field '{req_field}' not in dataset",
+                        "Fix field mapping or adjust rule configuration.",
+                    )
+                )
                 rules_with_issues.add(name)
                 continue
 
             for idx in df.index[mask]:
                 val = df.at[idx, req_field]
                 if _is_missing(val):
-                    issues_rows.append({
-                        "check": "consistency",
-                        "record_index": int(idx),
-                        "field": req_field,
-                        "message": f"Rule '{name}': '{when_field}' is '{when_equals}' so '{req_field}' is required",
-                        "suggested_fix": f"Populate '{req_field}' for this record, or correct '{when_field}' if misclassified.",
-                    })
+                    issues_rows.append(
+                        issue_row(
+                            "consistency",
+                            int(idx),
+                            req_field,
+                            "ERROR",
+                            f"Rule '{name}': '{when_field}' is '{when_equals}' so '{req_field}' is required",
+                            f"Populate '{req_field}' for this record, or correct '{when_field}' if misclassified.",
+                        )
+                    )
                     rules_with_issues.add(name)
 
         # THEN: specific fields must equal given values
         then_equals = rule.get("then_equals", {}) or {}
         for field, expected in then_equals.items():
             if field not in df.columns:
-                issues_rows.append({
-                    "check": "consistency",
-                    "record_index": None,
-                    "field": None,
-                    "message": f"Rule '{name}' failed: field '{field}' not in dataset",
-                    "suggested_fix": "Fix field mapping or adjust rule configuration.",
-                })
+                issues_rows.append(
+                    issue_row(
+                        "consistency",
+                        None,
+                        None,
+                        "WARN",
+                        f"Rule '{name}' failed: field '{field}' not in dataset",
+                        "Fix field mapping or adjust rule configuration.",
+                    )
+                )
                 rules_with_issues.add(name)
                 continue
 
@@ -107,16 +121,19 @@ def run_consistency(df: pd.DataFrame, cfg: Dict[str, Any]) -> ConsistencyResult:
                 actual = "" if pd.isna(df.at[idx, field]) else str(df.at[idx, field]).strip()
                 exp = str(expected).strip()
                 if actual != exp:
-                    issues_rows.append({
-                        "check": "consistency",
-                        "record_index": int(idx),
-                        "field": field,
-                        "message": f"Rule '{name}': expected '{field}' == '{exp}' when '{when_field}' == '{when_equals}' (got '{actual}')",
-                        "suggested_fix": f"Set '{field}' to '{exp}' or correct '{when_field}'.",
-                    })
+                    issues_rows.append(
+                        issue_row(
+                            "consistency",
+                            int(idx),
+                            field,
+                            "ERROR",
+                            f"Rule '{name}': expected '{field}' == '{exp}' when '{when_field}' == '{when_equals}' (got '{actual}')",
+                            f"Set '{field}' to '{exp}' or correct '{when_field}'.",
+                        )
+                    )
                     rules_with_issues.add(name)
 
-    issues = pd.DataFrame(issues_rows, columns=["check", "record_index", "field", "message", "suggested_fix"])
+    issues = pd.DataFrame(issues_rows) if issues_rows else empty_issues()
 
     # Simple status: any real record issues => FAIL, config problems => WARN
     record_issue_count = issues["record_index"].notna().sum() if not issues.empty else 0

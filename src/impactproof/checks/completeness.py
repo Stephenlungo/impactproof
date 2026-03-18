@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from typing import Any, Dict, List
 import pandas as pd
 
+from impactproof.issues import empty_issues, issue_row
+
 
 @dataclass
 class CompletenessResult:
@@ -24,13 +26,16 @@ def run_completeness(df: pd.DataFrame, cfg: Dict[str, Any]) -> CompletenessResul
     # Validate required fields exist in df
     missing_cols = [c for c in required_fields if c not in df.columns]
     if missing_cols:
-        issues = pd.DataFrame([{
-            "check": "completeness",
-            "record_index": None,
-            "field": None,
-            "message": f"Missing required columns in dataset: {missing_cols}",
-            "suggested_fix": "Update field mapping or provide these columns in the input.",
-        }])
+        issues = pd.DataFrame([
+            issue_row(
+                "completeness",
+                None,
+                None,
+                "WARN",
+                f"Missing required columns in dataset: {missing_cols}",
+                "Update field mapping or provide these columns in the input.",
+            )
+        ])
         return CompletenessResult(
             check="completeness",
             status="FAIL",
@@ -71,14 +76,17 @@ def run_completeness(df: pd.DataFrame, cfg: Dict[str, Any]) -> CompletenessResul
             val = row[col]
             s = "" if pd.isna(val) else str(val).strip()
             if pd.isna(val) or s in missing_tokens:
-                issues_rows.append({
-                    "check": "completeness",
-                    "record_index": idx,
-                    "field": col,
-                    "message": f"Missing required value for '{col}'",
-                    "suggested_fix": f"Populate '{col}' or mark explicitly (NA/UNKNOWN) where appropriate.",
-                })
-    issues = pd.DataFrame(issues_rows)
+                issues_rows.append(
+                    issue_row(
+                        "completeness",
+                        int(idx),
+                        col,
+                        "ERROR",
+                        f"Missing required value for '{col}'",
+                        f"Populate '{col}' or mark explicitly (NA/UNKNOWN) where appropriate.",
+                    )
+                )
+    issues = pd.DataFrame(issues_rows) if issues_rows else empty_issues()
 
     notes = f"{completeness_rate:.1%} required cells present ({missing_cells} missing of {total_required_cells})"
     return CompletenessResult(
